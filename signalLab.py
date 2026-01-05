@@ -80,23 +80,35 @@ class SignalLab:
         calc_menu.add_command(label="Higuchi", command=self._calculate_higuchi)
         calc_menu.add_command(label="All", command=self._calculate_all)
 
-    def _create_toolbar(self):
-        toolbar = tk.Frame(self.root, bg='#B0C4DE')
-        toolbar.pack(side=tk.TOP, fill=tk.X)
+    def create_toolbar_buttons(self, toolbar):
+        """
+        Create buttons for different interactions
+        
+        Parameters:
+        - toolbar: The toolbar frame to add buttons to
+        """
+        unknown_button_width = 10
 
-        # Determine the width of the 'Unknown' button
-        unknown_button_width = 10  # Adjust this value if needed
+        # Reset view button
+        reset_btn = tk.Button(
+            toolbar, 
+            text='Reset View', 
+            width=unknown_button_width,
+            command=self.app.interaction_modes.reset_view,
+            anchor='center'
+        )
+        reset_btn.pack(side=tk.LEFT, padx=5, pady=5)
 
         # State selection buttons
-        for state_val, state_info in self.state_colors.items():
+        for state_val, state_info in self.app.state_colors.items():
             btn = tk.Button(
                 toolbar, 
                 text=state_info['name'], 
                 bg=state_info['color'],
                 fg=state_info['label_color'],
-                width=unknown_button_width,  # Set consistent width
-                command=lambda s=state_val: self._set_state_mode(s),
-                anchor='center'  # Center the text horizontally
+                width=unknown_button_width,
+                command=lambda s=state_val: self.app.interaction_modes.set_state_mode(s),
+                anchor='center'
             )
             btn.pack(side=tk.LEFT, padx=5, pady=5)
 
@@ -113,13 +125,19 @@ class SignalLab:
         
         # Add navigation toolbar
         self.toolbar = NavigationToolbar2Tk(self.canvas, self.root)
+        
+        # Remove the Zoom button
+        for child in self.toolbar.winfo_children():
+            if isinstance(child, tk.Checkbutton) and 'Zoom' in str(child):
+                child.pack_forget()  # Hide the Zoom button
+        
         self.toolbar.update()
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
 
         # Connect mouse events 
         self.canvas.mpl_connect('button_press_event', self._on_mouse_press)
         self.canvas.mpl_connect('motion_notify_event', self._on_mouse_move)
-        self.canvas.mpl_connect('button_release_event', self._on_mouse_release) 
+        self.canvas.mpl_connect('button_release_event', self._on_mouse_release)
         
 
 
@@ -137,7 +155,11 @@ class SignalLab:
 
             self._plot_data()
 
-    def _plot_data(self):
+    def _plot_data(self, rescale=True):
+        # Capture current view limits before clearing
+        current_xlim = self.ax.get_xlim()
+        current_ylim = self.ax.get_ylim()
+
         self.ax.clear()
 
         # Plot main signal FIRST (gray line in the background)
@@ -163,12 +185,17 @@ class SignalLab:
         self.ax.set_xlabel('Time (s)')
         self.ax.set_ylabel('Magnitude (magR)')
 
-        # Autoscale with minimal padding
-        self.ax.set_xlim(self.time_S[0], self.time_S[-1])
-        self.ax.set_ylim(
-            self.magR.min() - abs(self.magR.min()) * 0.05,
-            self.magR.max() + abs(self.magR.max()) * 0.05
-        )
+        # Autoscale or restore previous limits
+        if rescale:
+            self.ax.set_xlim(self.time_S[0], self.time_S[-1])
+            self.ax.set_ylim(
+                self.magR.min() - abs(self.magR.min()) * 0.05,
+                self.magR.max() + abs(self.magR.max()) * 0.05
+            )
+        else:
+            # Restore previous view limits
+            self.ax.set_xlim(current_xlim)
+            self.ax.set_ylim(current_ylim)
 
         # Re-apply grid settings
         self.ax.grid(True, linestyle='--', color='darkgray')
