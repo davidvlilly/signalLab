@@ -8,6 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.widgets import RectangleSelector
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from siglab_lib.mainWinSupport import InteractionModes, ToolbarUtils
+from siglab_lib.fileIO import FileOperations
 
 # Add library path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -21,6 +22,9 @@ class SignalLab:
         self.root.title("SignalLab")
         self.root.geometry('1400x900')
         self.root.configure(bg='#B0C4DE')
+        
+        # Create file operations
+        self.file_ops = FileOperations(self)
 
         # Data storage
         self.filepath = None
@@ -59,6 +63,7 @@ class SignalLab:
         # Connect mouse events
         self.canvas.mpl_connect('button_press_event', self.interaction_modes.on_mouse_press)
         
+        
 
     def _create_menu_bar(self):
         menubar = tk.Menu(self.root,background='#D0D8E0')
@@ -67,9 +72,9 @@ class SignalLab:
         # File Menu
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
-        file_menu.add_command(label="Open", command=self._open_file)
-        file_menu.add_command(label="Save", command=self._save_file)
-        file_menu.add_command(label="Save As", command=self._save_as_file)
+        file_menu.add_command(label="Open", command=self.file_ops.open_file)
+        file_menu.add_command(label="Save", command=self.file_ops.save_file)
+        file_menu.add_command(label="Save As", command=self.file_ops.save_as_file)
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
@@ -139,21 +144,6 @@ class SignalLab:
         self.canvas.mpl_connect('motion_notify_event', self._on_mouse_move)
         self.canvas.mpl_connect('button_release_event', self._on_mouse_release)
         
-
-
-    def _open_file(self):
-        # Open HDF5 file and load data
-        filepath = tk.filedialog.askopenfilename(
-            filetypes=[("F5B files", "*.f5b")]
-        )
-        if filepath:
-            with h5py.File(filepath, 'r') as f:
-                self.magR = f['signal/magR'][:]
-                self.time_S = f['signal/time_S'][:]
-                self.tag_state = f['tag/state'][:]
-                self.filepath = filepath
-
-            self._plot_data()
 
     def _plot_data(self, rescale=True):
         # Capture current view limits before clearing
