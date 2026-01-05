@@ -1,7 +1,7 @@
 # SignalLab
 
 ## Overview
-SignalLab is a Python-based software tool for signal analysis, specifically designed for processing and analyzing high-frequency signal data.
+SignalLab is a Python-based software tool Viewing, Editing, the Intravenous RF Blood (IVRB) system signal, that is used to detect blood clot formations
 
 ## Key Features
 - Signal visualization with state-coded markers
@@ -63,7 +63,7 @@ HDF5 File (.f5b) with following datasets:
 - Tkinter
 
 ## License
-[Add License Information]
+None
 
 ## Contributors
-[Add Contributor Information]
+David Lilly

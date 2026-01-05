@@ -58,6 +58,7 @@ class SignalLab:
 
         # Connect mouse events
         self.canvas.mpl_connect('button_press_event', self.interaction_modes.on_mouse_press)
+        
 
     def _create_menu_bar(self):
         menubar = tk.Menu(self.root,background='#D0D8E0')
@@ -137,7 +138,6 @@ class SignalLab:
             self._plot_data()
 
     def _plot_data(self):
-        # Clear previous plot
         self.ax.clear()
 
         # Plot main signal FIRST (gray line in the background)
@@ -150,11 +150,11 @@ class SignalLab:
             state_time = self.time_S[::30][state_mask]
             state_mag = self.magR[::30][state_mask]
 
-            # Plot state markers with higher zorder to ensure they're on top
             self.ax.scatter(state_time, state_mag, 
                             color=state_info['color'], 
                             label=state_info['name'],
-                            zorder=2)  # Higher zorder to plot on top of the line
+                            s=10,  # Reduced from 50 to 25
+                            zorder=2) 
 
         # Set plot title using case file name
         self.ax.set_title(f'Signal: {os.path.basename(self.filepath)}')
