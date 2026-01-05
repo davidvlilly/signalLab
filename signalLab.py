@@ -77,11 +77,18 @@ class SignalLab:
         calc_menu.add_command(label="Higuchi", command=self._calculate_higuchi)
         calc_menu.add_command(label="All", command=self._calculate_all)
 
-        # Plot Menu
-        plot_menu = tk.Menu(menubar, tearoff=0)
-        menubar.add_cascade(label="Plot", menu=plot_menu)
-        plot_menu.add_command(label="Stats", command=self._plot_stats)
-        plot_menu.add_command(label="Higuchi", command=self._plot_higuchi)
+        # Time-Plot Menu (renamed from Plot)
+        time_plot_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Time-Plot", menu=time_plot_menu)
+        time_plot_menu.add_command(label="Stats", command=self._plot_stats)
+        time_plot_menu.add_command(label="Higuchi", command=self._plot_higuchi)
+
+        # NEW: Scatter-Plot Menu
+        scatter_plot_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Scatter-Plot", menu=scatter_plot_menu)
+        scatter_plot_menu.add_command(label="Higuchi", command=self._scatter_plot_higuchi)
+        scatter_plot_menu.add_command(label="Range Vs BloodRefDiff", command=self._scatter_plot_range_bloodref)
+
 
     def create_toolbar_buttons(self, toolbar):
         unknown_button_width = 10
@@ -144,6 +151,16 @@ class SignalLab:
         
         from siglab_lib.externalPlot import create_higuchi_plot
         create_higuchi_plot(self)
+        
+    def _scatter_plot_higuchi(self):
+        """Launch Higuchi scatter plot"""
+        from siglab_lib.scatterPlot import create_higuchi_scatter
+        create_higuchi_scatter(self)
+
+    def _scatter_plot_range_bloodref(self):
+        """Launch Range vs Blood Reference Difference scatter plot"""
+        from siglab_lib.scatterPlot import create_range_bloodref_scatter
+        create_range_bloodref_scatter(self)
 
 
 
