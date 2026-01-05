@@ -3,6 +3,7 @@ import tkinter as tk
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
+from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 
 class InteractionModes:
     def __init__(self, app):
@@ -29,8 +30,6 @@ class InteractionModes:
         )
         self.rect_selector.set_active(False)
 
-
-
     def _zoom_select_callback(self, eclick, erelease):
         """Callback for rectangle zoom"""
         x1, x2 = eclick.xdata, erelease.xdata
@@ -42,14 +41,63 @@ class InteractionModes:
         self.app.canvas.draw()
 
     def reset_view(self):
-        """Reset plot to original view"""
-        if self.app.time_S is not None:
-            self.app.ax.set_xlim(self.app.time_S[0], self.app.time_S[-1])
-            self.app.ax.set_ylim(
-                self.app.magR.min() - abs(self.app.magR.min()) * 0.05,
-                self.app.magR.max() + abs(self.app.magR.max()) * 0.05
-            )
-            self.app.canvas.draw()
+        """Reset zoom mode and toolbar"""
+        # Reset interaction mode
+        self.interaction_mode = None
+        self.rect_selector.set_active(False)
+        
+        try:
+            # Attempt to reset toolbar mode programmatically
+            if hasattr(self.app.toolbar, 'mode'):
+                # Try to set mode to a non-zoom state
+                self.app.toolbar.mode = None  # or try other potential reset values
+            
+            # Additional reset attempts
+            if hasattr(self.app.toolbar, '_zoom_mode'):
+                self.app.toolbar._zoom_mode = False
+            
+            # Call home method to reset view
+            self.app.toolbar.home()
+        except Exception as e:
+            print(f"Error resetting toolbar mode: {e}")
+        
+        # Disable all buttons in the toolbar
+        try:
+            for child in self.app.toolbar.winfo_children():
+                if isinstance(child, (tk.Button, tk.Checkbutton)):
+                    child.configure(state='disabled')
+        except Exception as e:
+            print(f"Error disabling toolbar buttons: {e}")
+        
+        # Force redraw
+        self.app.canvas.draw()
+
+    def deactivate_plot_menubar(self):
+        """Deactivate plot menubar buttons and zoom/pan modes"""
+        try:
+            # Reset toolbar mode
+            if hasattr(self.app.toolbar, 'mode'):
+                self.app.toolbar.mode = None
+            
+            # Disable all buttons in the toolbar
+            for child in self.app.toolbar.winfo_children():
+                if isinstance(child, (tk.Button, tk.Checkbutton)):
+                    child.configure(state='disabled')
+            
+            # Deactivate rectangle selector
+            self.rect_selector.set_active(False)
+        except Exception as e:
+            print(f"Error deactivating plot menubar: {e}")
+
+    def restore_plot_menubar(self):
+        """Restore access to plot menubar buttons"""
+        try:
+            # Re-enable all buttons in the toolbar
+            for child in self.app.toolbar.winfo_children():
+                if isinstance(child, (tk.Button, tk.Checkbutton)):
+                    child.configure(state='normal')
+        except Exception as e:
+            print(f"Error restoring plot menubar: {e}")
 
     def set_state_mode(self, state_val):
         # Remove any existing mode text
@@ -58,19 +106,27 @@ class InteractionModes:
             del self.mode_text
             self.app.canvas.draw()
 
+        # If already in a different mode, cancel that mode first
+        if self.interaction_mode is not None and self.interaction_mode != 'state_select':
+            # Restore plot menubar for previous mode
+            self.restore_plot_menubar()
+
         if self.interaction_mode == 'state_select' and self.current_state_selection == state_val:
             # Deactivate if same state is selected again
             self.interaction_mode = None
             self.current_state_selection = None
             self.selection_points = []
+            
+            # Restore plot menubar
+            self.restore_plot_menubar()
         else:
             # Activate state selection mode
             self.interaction_mode = 'state_select'
             self.current_state_selection = state_val
             self.selection_points = []
             
-            # Deactivate zoom
-            self.rect_selector.set_active(False)
+            # Deactivate plot menubar
+            self.deactivate_plot_menubar()
             
             # Add text to figure with red background
             state_name = self.app.state_colors[state_val]['name']
@@ -91,14 +147,23 @@ class InteractionModes:
             del self.mode_text
             self.app.canvas.draw()
 
+        # If already in a different mode, cancel that mode first
+        if self.interaction_mode is not None and self.interaction_mode != 'zoom':
+            # Restore plot menubar for previous mode
+            self.restore_plot_menubar()
+
         if self.interaction_mode == 'zoom':
             # Deactivate zoom
             self.interaction_mode = None
-            self.rect_selector.set_active(False)
+            
+            # Restore plot menubar
+            self.restore_plot_menubar()
         else:
             # Activate zoom
             self.interaction_mode = 'zoom'
-            self.rect_selector.set_active(True)
+            
+            # Deactivate plot menubar
+            self.deactivate_plot_menubar()
             
             # Add text to figure with red background
             self.mode_text = self.app.fig.text(
@@ -144,6 +209,8 @@ class InteractionModes:
             
             # Reset selection
             self.selection_points = []
+            
+          
 
 class ToolbarUtils:
     def __init__(self, app):
