@@ -29,20 +29,7 @@ class InteractionModes:
         )
         self.rect_selector.set_active(False)
 
-    def toggle_zoom_mode(self):
-        """Toggle rectangular zoom mode"""
-        if self.interaction_mode == 'zoom':
-            # Deactivate zoom
-            self.interaction_mode = None
-            self.rect_selector.set_active(False)
-        else:
-            # Activate zoom
-            self.interaction_mode = 'zoom'
-            self.rect_selector.set_active(True)
-            
-            # Reset other modes
-            self.current_state_selection = None
-            self.selection_points = []
+
 
     def _zoom_select_callback(self, eclick, erelease):
         """Callback for rectangle zoom"""
@@ -65,7 +52,12 @@ class InteractionModes:
             self.app.canvas.draw()
 
     def set_state_mode(self, state_val):
-        """Set state selection mode"""
+        # Remove any existing mode text
+        if hasattr(self, 'mode_text'):
+            self.mode_text.remove()
+            del self.mode_text
+            self.app.canvas.draw()
+
         if self.interaction_mode == 'state_select' and self.current_state_selection == state_val:
             # Deactivate if same state is selected again
             self.interaction_mode = None
@@ -79,9 +71,26 @@ class InteractionModes:
             
             # Deactivate zoom
             self.rect_selector.set_active(False)
+            
+            # Add text to figure with red background
+            state_name = self.app.state_colors[state_val]['name']
+            self.mode_text = self.app.fig.text(
+                0.5, 0.95, 
+                f"{state_name} Mode", 
+                transform=self.app.fig.transFigure,
+                horizontalalignment='center',
+                verticalalignment='top',
+                bbox=dict(facecolor='red', alpha=0.7, edgecolor='darkred')
+            )
+            self.app.canvas.draw()
 
     def toggle_zoom_mode(self):
-        """Toggle rectangular zoom mode"""
+        # Remove any existing mode text
+        if hasattr(self, 'mode_text'):
+            self.mode_text.remove()
+            del self.mode_text
+            self.app.canvas.draw()
+
         if self.interaction_mode == 'zoom':
             # Deactivate zoom
             self.interaction_mode = None
@@ -90,6 +99,17 @@ class InteractionModes:
             # Activate zoom
             self.interaction_mode = 'zoom'
             self.rect_selector.set_active(True)
+            
+            # Add text to figure with red background
+            self.mode_text = self.app.fig.text(
+                0.5, 0.95, 
+                "Zoom Mode", 
+                transform=self.app.fig.transFigure,
+                horizontalalignment='center',
+                verticalalignment='top',
+                bbox=dict(facecolor='red', alpha=0.7, edgecolor='darkred')
+            )
+            self.app.canvas.draw()
             
             # Reset other modes
             self.current_state_selection = None
@@ -120,7 +140,7 @@ class InteractionModes:
             self.app.tag_state[mask] = self.current_state_selection
             
             # Replot to show updated states
-            self.app._plot_data()  # Note the underscore
+            self.app._plot_data()  # Remove reset_view argument
             
             # Reset selection
             self.selection_points = []

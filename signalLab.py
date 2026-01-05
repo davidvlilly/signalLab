@@ -153,7 +153,7 @@ class SignalLab:
             self.ax.scatter(state_time, state_mag, 
                             color=state_info['color'], 
                             label=state_info['name'],
-                            s=10,  # Reduced from 50 to 25
+                            s=10,
                             zorder=2) 
 
         # Set plot title using case file name
@@ -166,8 +166,8 @@ class SignalLab:
         # Autoscale with minimal padding
         self.ax.set_xlim(self.time_S[0], self.time_S[-1])
         self.ax.set_ylim(
-            self.magR.min() - abs(self.magR.min()) * 0.05,  # Small padding below min
-            self.magR.max() + abs(self.magR.max()) * 0.05   # Small padding above max
+            self.magR.min() - abs(self.magR.min()) * 0.05,
+            self.magR.max() + abs(self.magR.max()) * 0.05
         )
 
         # Re-apply grid settings
