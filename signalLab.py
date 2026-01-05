@@ -89,15 +89,15 @@ class SignalLab:
         """
         unknown_button_width = 10
 
-        # Reset view button
-        reset_btn = tk.Button(
+        # Escape button
+        escape_btn = tk.Button(
             toolbar, 
-            text='Reset View', 
+            text='Escape', 
             width=unknown_button_width,
-            command=self.app.interaction_modes.reset_view,
+            command=self.app.interaction_modes.escape_interactive_mode,
             anchor='center'
         )
-        reset_btn.pack(side=tk.LEFT, padx=5, pady=5)
+        escape_btn.pack(side=tk.LEFT, padx=5, pady=5)
 
         # State selection buttons
         for state_val, state_info in self.app.state_colors.items():

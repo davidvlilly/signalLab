@@ -18,38 +18,26 @@ class InteractionModes:
         self.current_state_selection = None
         self.selection_points = []
 
-
-    def reset_view(self):
-        """Reset zoom mode and toolbar"""
-        # Reset interaction mode
-        self.interaction_mode = None
-        self.rect_selector.set_active(False)
-        
-        try:
-            # Attempt to reset toolbar mode programmatically
-            if hasattr(self.app.toolbar, 'mode'):
-                # Try to set mode to a non-zoom state
-                self.app.toolbar.mode = None  # or try other potential reset values
+    def escape_interactive_mode(self):
+        """
+        Exit any active interactive mode
+        Removes mode text and restores plot menubar
+        """
+        # If in an interactive mode
+        if self.interaction_mode is not None:
+            # Remove mode text
+            if hasattr(self, 'mode_text'):
+                self.mode_text.remove()
+                del self.mode_text
+                self.app.canvas.draw()
             
-            # Additional reset attempts
-            if hasattr(self.app.toolbar, '_zoom_mode'):
-                self.app.toolbar._zoom_mode = False
+            # Reset interaction mode
+            self.interaction_mode = None
+            self.current_state_selection = None
+            self.selection_points = []
             
-            # Call home method to reset view
-            self.app.toolbar.home()
-        except Exception as e:
-            print(f"Error resetting toolbar mode: {e}")
-        
-        # Disable all buttons in the toolbar
-        try:
-            for child in self.app.toolbar.winfo_children():
-                if isinstance(child, (tk.Button, tk.Checkbutton)):
-                    child.configure(state='disabled')
-        except Exception as e:
-            print(f"Error disabling toolbar buttons: {e}")
-        
-        # Force redraw
-        self.app.canvas.draw()
+            # Restore plot menubar
+            self.restore_plot_menubar()
 
     def deactivate_plot_menubar(self):
         """Deactivate plot menubar buttons and zoom/pan modes"""
@@ -153,15 +141,7 @@ class InteractionModes:
             
           
 
-class ToolbarUtils:
-    def __init__(self, app):
-        """
-        Initialize toolbar utilities for the SignalLab application
-        
-        Parameters:
-        - app: Main application instance
-        """
-        self.app = app
+
 
 class ToolbarUtils:
     def __init__(self, app):
@@ -182,15 +162,15 @@ class ToolbarUtils:
         """
         unknown_button_width = 10
 
-        # Reset view button
-        reset_btn = tk.Button(
+        # Escape button (formerly Reset View)
+        escape_btn = tk.Button(
             toolbar, 
-            text='Reset View', 
+            text='Escape', 
             width=unknown_button_width,
-            command=self.app.interaction_modes.reset_view,
+            command=self.app.interaction_modes.escape_interactive_mode,
             anchor='center'
         )
-        reset_btn.pack(side=tk.LEFT, padx=5, pady=5)
+        escape_btn.pack(side=tk.LEFT, padx=5, pady=5)
 
         # State selection buttons
         for state_val, state_info in self.app.state_colors.items():
