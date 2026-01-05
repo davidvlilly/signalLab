@@ -1,6 +1,7 @@
 import os
 import sys
 import tkinter as tk
+from tkinter import messagebox
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
@@ -10,6 +11,8 @@ from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
 from siglab_lib.mainWinSupport import InteractionModes, ToolbarUtils
 from siglab_lib.fileIO import FileOperations
 from siglab_lib.mainWinPlot import MainWindowPlotter
+from siglab_lib.calcStats import calculate_segment_stats
+from siglab_lib.externalPlot import create_stats_plot, create_higuchi_plot
 
 # Add library path
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +32,7 @@ class SignalLab:
         self.magR = None
         self.time_S = None
         self.tag_state = None
+        self.stats = None
 
         # State colors
         self.state_colors = {
@@ -40,38 +44,24 @@ class SignalLab:
             5: {'name': 'Step', 'color': 'black', 'label_color': 'white'}
         }
 
-        # Create file operations
+        # Create toolbar/plot_utils/canvas
         self.file_ops = FileOperations(self)
-
-        # Create menu bar
         self._create_menu_bar()
-
-        # Create toolbar frame
         self.toolbar_frame = tk.Frame(self.root, bg='#B0C4DE', height=50)
         self.toolbar_frame.pack(side=tk.TOP, fill=tk.X, padx=10, pady=5)
-
-        # Create plot plotter
         self.plot_utils = MainWindowPlotter(self)
-
-        # Create plot area
         self.plot_utils.create_plot_area()
-
-        # Create interaction modes and toolbar
         self.interaction_modes = InteractionModes(self)
         self.toolbar_utils = ToolbarUtils(self)
-        
-        # Create toolbar buttons
         self.toolbar_utils.create_toolbar_buttons(self.toolbar_frame)
-
-        # Connect mouse events
         self.canvas.mpl_connect('button_press_event', self.interaction_modes.on_mouse_press)
         
 
     def _create_menu_bar(self):
-        menubar = tk.Menu(self.root,background='#D0D8E0')
+        menubar = tk.Menu(self.root, background='#D0D8E0')
         self.root.config(menu=menubar)
 
-        # File Menu
+        # File Menu (existing code remains the same)
         file_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open", command=self.file_ops.open_file)
@@ -80,20 +70,20 @@ class SignalLab:
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self.root.quit)
 
-        # Calculate Menu
+        # Calculate Menu (existing code remains the same)
         calc_menu = tk.Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Calc", menu=calc_menu)
         calc_menu.add_command(label="Stats", command=self._calculate_stats)
         calc_menu.add_command(label="Higuchi", command=self._calculate_higuchi)
         calc_menu.add_command(label="All", command=self._calculate_all)
 
+        # Plot Menu
+        plot_menu = tk.Menu(menubar, tearoff=0)
+        menubar.add_cascade(label="Plot", menu=plot_menu)
+        plot_menu.add_command(label="Stats", command=self._plot_stats)
+        plot_menu.add_command(label="Higuchi", command=self._plot_higuchi)
+
     def create_toolbar_buttons(self, toolbar):
-        """
-        Create buttons for different interactions
-        
-        Parameters:
-        - toolbar: The toolbar frame to add buttons to
-        """
         unknown_button_width = 10
 
         # Escape button
@@ -118,6 +108,42 @@ class SignalLab:
                 anchor='center'
             )
             btn.pack(side=tk.LEFT, padx=5, pady=5)
+            
+    def _calculate_stats(self):
+        """Calculate and store signal statistics"""
+        from siglab_lib.calcStats import calculate_segment_stats       
+        # Calculate comprehensive statistics
+        self.stats = calculate_segment_stats(self)      
+        #print("bloodEstVal:", *[int(val) for val in self.stats['bloodEstVal'][:30]])
+        #print("bloodEstRng:", *[int(val) for val in self.stats['bloodEstRng'][:30]])
+        
+    def _plot_stats(self):
+        """Launch external stats plot"""
+        if self.stats is None:
+            tk.messagebox.showinfo("Stats Plot", "Please calculate stats first using Calc > Stats")
+            return
+        
+        from siglab_lib.externalPlot import create_stats_plot
+        create_stats_plot(self)
+
+    def _calculate_higuchi(self):
+        """Calculate and store Higuchi Fractal Dimension statistics"""
+        from siglab_lib.calcHiguchi import calculate_higuchi_stats
+        
+        # Calculate Higuchi statistics
+        self.higuchi_stats = calculate_higuchi_stats(self.magR, self.time_S)
+        
+        # Optional: Print some stats
+        print("Higuchi Fractal Dimension statistics calculated")
+
+    def _plot_higuchi(self):
+        """Launch external Higuchi plot"""
+        if not hasattr(self, 'higuchi_stats') or self.higuchi_stats is None:
+            tk.messagebox.showinfo("Higuchi Plot", "Please calculate Higuchi stats first using Calc > Higuchi")
+            return
+        
+        from siglab_lib.externalPlot import create_higuchi_plot
+        create_higuchi_plot(self)
 
 
 
@@ -145,13 +171,6 @@ class SignalLab:
         # Save to a new file
         pass
 
-    def _calculate_stats(self):
-        # Calculate signal statistics
-        pass
-
-    def _calculate_higuchi(self):
-        # Calculate Higuchi Fractal Dimension
-        pass
 
     def _calculate_all(self):
         # Calculate all available metrics
