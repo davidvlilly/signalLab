@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
 from matplotlib.backends.backend_tkagg import NavigationToolbar2Tk
+from siglab_lib.mainWinPlot import MainWindowPlotter
 
 class InteractionModes:
     def __init__(self, app):
@@ -134,7 +135,7 @@ class InteractionModes:
             self.app.tag_state[mask] = self.current_state_selection
             
             # Replot to show updated states WITHOUT rescaling
-            self.app._plot_data(rescale=False)
+            self.app.plot_utils.plot_data(rescale=False)
             
             # Reset selection
             self.selection_points = []

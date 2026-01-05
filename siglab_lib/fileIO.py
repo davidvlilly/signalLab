@@ -4,6 +4,7 @@ import tkinter as tk
 import tkinter.filedialog as filedialog
 import tkinter.messagebox as messagebox
 import h5py
+from siglab_lib.mainWinPlot import MainWindowPlotter
 
 class FileOperations:
     def __init__(self, app):
@@ -33,7 +34,7 @@ class FileOperations:
                     self.app.filepath = filepath
 
                 # Plot the data
-                self.app._plot_data()
+                self.app.plot_utils.plot_data()
 
             except Exception as e:
                 messagebox.showerror("File Open Error", str(e))
